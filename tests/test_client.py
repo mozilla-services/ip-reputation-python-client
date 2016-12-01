@@ -8,7 +8,7 @@ import mock
 from ipreputation.client import IPReputationClient
 
 TEST_IP = '192.168.0.1'
-
+TEST_TIMEOUT = 3 # seconds
 
 class IPReputationClientTest(unittest.TestCase):
 
@@ -18,14 +18,15 @@ class IPReputationClientTest(unittest.TestCase):
             hawk_key='toor',
             host='localhost',
             port=8080,
-            timeout=3)
+            timeout=TEST_TIMEOUT)
 
     def test_get_ip(self):
         with mock.patch('ipreputation.client.requests') as requests:
             self.client.get(TEST_IP)
             requests.get.assert_called_with(
                 'http://localhost:8080/' + TEST_IP,
-                auth=self.client.auth)
+                auth=self.client.auth,
+                timeout=TEST_TIMEOUT)
 
     def test_add_ip(self):
         with mock.patch('ipreputation.client.requests') as requests:
@@ -33,7 +34,8 @@ class IPReputationClientTest(unittest.TestCase):
             requests.post.assert_called_with(
                 'http://localhost:8080/',
                 auth=self.client.auth,
-                json={'ip': TEST_IP, 'reputation': 20})
+                json={'ip': TEST_IP, 'reputation': 20},
+                timeout=TEST_TIMEOUT)
 
     def test_update_ip(self):
         with mock.patch('ipreputation.client.requests') as requests:
@@ -41,14 +43,16 @@ class IPReputationClientTest(unittest.TestCase):
             requests.put.assert_called_with(
                 'http://localhost:8080/' + TEST_IP,
                 auth=self.client.auth,
-                json={'ip': TEST_IP, 'reputation': 70})
+                json={'ip': TEST_IP, 'reputation': 70},
+                timeout=TEST_TIMEOUT)
 
     def test_remove_ip(self):
         with mock.patch('ipreputation.client.requests') as requests:
             self.client.remove(TEST_IP)
             requests.delete.assert_called_with(
                 'http://localhost:8080/' + TEST_IP,
-                auth=self.client.auth)
+                auth=self.client.auth,
+                timeout=TEST_TIMEOUT)
 
     def test_send_violation(self):
         with mock.patch('ipreputation.client.requests') as requests:
@@ -57,7 +61,8 @@ class IPReputationClientTest(unittest.TestCase):
             requests.put.assert_called_with(
                 'http://localhost:8080/violations/',
                 auth=self.client.auth,
-                json={'violation': 'test-violation', 'ip': TEST_IP})
+                json={'violation': 'test-violation', 'ip': TEST_IP},
+                timeout=TEST_TIMEOUT)
 
 
 if __name__ == '__main__':
