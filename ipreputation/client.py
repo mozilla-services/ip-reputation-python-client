@@ -34,7 +34,7 @@ class IPReputationClient(object):
                                timeout=self.timeout)
 
     def send_violation(self, ip, violation_type):
-        return requests.put(self.base_url + 'violations/',
+        return requests.put(self.base_url + 'violations/' + ip,
                             auth=self.auth,
                             json={'ip': ip, 'violation': violation_type},
                             timeout=self.timeout)

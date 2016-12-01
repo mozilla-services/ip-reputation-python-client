@@ -4,6 +4,7 @@ try:
 except ImportError:
     import unittest  # NOQA
 import mock
+from requests.exceptions import Timeout
 
 from ipreputation.client import IPReputationClient
 
@@ -65,7 +66,70 @@ class IPReputationClientTest(unittest.TestCase):
                 timeout=TEST_TIMEOUT)
 
 
+
+def integration_test():
+    """
+    Tests against running tigerblood service.
+
+    run with: make tests-integration
+    """
+    client = IPReputationClient(
+        hawk_id='root',
+        hawk_key='toor',
+        host='localhost',
+        port=8080,
+        timeout=3)
+
+    # clear entry for our TEST_IP
+    response = client.remove(TEST_IP)
+
+    # does not get reputation for a nonexistent IP
+    response = client.get(TEST_IP)
+    assert response.status_code == 404, "Cannot get TEST IP: {}.".format(TEST_IP)
+
+    # does not update reputation for nonexistent IP
+    response = client.update(TEST_IP, 500)
+    assert response.status_code == 404, "Cannot update TEST IP: {}".format(TEST_IP)
+
+    # does not remove reputation for a nonexistent IP
+    response = client.remove(TEST_IP)
+    assert response.status_code == 200, "Cannot remove TEST IP: {}".format(TEST_IP)
+
+    # adds reputation for new IP
+    response = client.add(TEST_IP, 50)
+    assert response.status_code == 201
+
+    # does not add reputation for existing IP
+    response = client.add(TEST_IP, 50)
+    assert response.status_code == 409
+
+    # updates reputation for existing IP
+    response = client.update(TEST_IP, 5)
+    assert response.status_code == 200
+
+    # removes reputation for existing IP
+    response = client.remove(TEST_IP)
+    assert response.status_code == 200
+
+    # sends a violation
+    response = client.send_violation(TEST_IP, 'test_violation')
+    assert response.status_code == 204
+
+    # times out a GET request
+    timeout_client = IPReputationClient(
+        hawk_id='root',
+        hawk_key='toor',
+        host='localhost',
+        port=8080,
+        timeout=0.0001) # 0.1 ms
+
+    timed_out = False
+    try:
+        timeout_client.get(TEST_IP)
+    except Timeout:
+        timed_out = True
+    assert timed_out == True
+
+
 if __name__ == '__main__':
-    # run python -m tests/test_client.py
-    # Test against running service
-    print('main')
+    integration_test()
